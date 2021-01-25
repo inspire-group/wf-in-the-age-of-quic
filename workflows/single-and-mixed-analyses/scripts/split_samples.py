@@ -227,6 +227,10 @@ class Splitter:
 
         Each URL in the unmonitored set should have at least 1 sample
         for each of QUIC and TCP.
+
+        (mona) here, we also just drop a half of the dataset after shuffling.
+               we should do this more carefully -- by ensuring some classes
+               don't get dropped, etc.
         """
         for monitored_indices, unmonitored_indices in zip(
             self.split_monitored(labels), self.split_unmonitored(labels)
@@ -234,14 +238,17 @@ class Splitter:
             train_idx = np.concatenate((
                 monitored_indices.train, unmonitored_indices.train))
             self.random_state.shuffle(train_idx)
+            train_idx = np.delete(range(len(train_idx)/2, len(train_idx)))
 
             val_idx = np.concatenate((
                 monitored_indices.val, unmonitored_indices.val))
             self.random_state.shuffle(val_idx)
+            val_idx = np.delete(range(len(val_idx)/2, len(val_idx)))
 
             test_idx = np.concatenate((
                 monitored_indices.test, unmonitored_indices.test))
             self.random_state.shuffle(test_idx)
+            test_idx = np.delete(range(len(test_idx)/2, len(test_idx)))
 
             yield Split(train_idx, val_idx, test_idx)
 

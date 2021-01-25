@@ -76,7 +76,7 @@ rule classifier_protocol_evaluation__gpu:
     input:
         expand("results/dataset-performance/{classifier}/predictions-{protocol}-{i:02d}.csv",
                classifier=GPU_CLASSIFIERS, i=range(config["n_repetitions"]),
-               protocol=("tcp", "quic", "mixed"))
+               protocol=config["protocols"])
 
 
 rule classifier_protocol_evaluation__cpu:
@@ -84,4 +84,4 @@ rule classifier_protocol_evaluation__cpu:
     input:
         expand("results/dataset-performance/{classifier}/predictions-{protocol}-{i:02d}.csv",
                classifier=CPU_CLASSIFIERS, i=range(config["n_repetitions"]),
-               protocol=("tcp", "quic", "mixed"))
+               protocol=config["protocols"])
