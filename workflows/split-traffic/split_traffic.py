@@ -53,9 +53,9 @@ def split(label, sizes, timestamps, strategy, freq, npaths):
             [time - timestamp[0] for time in timestamp] for timestamp in new_timestamps
             if len(timestamp) > 0
         ]
-
     new_sizes = [sizes for sizes in new_sizes if len(sizes) > 0]
-    for n in range(len(sizes)):
+
+    for n in range(len(new_sizes)):
         new_labels.append(label)
 
     return new_labels, new_sizes, new_timestamps

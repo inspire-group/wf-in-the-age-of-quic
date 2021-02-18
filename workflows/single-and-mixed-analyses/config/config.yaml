@@ -1,5 +1,5 @@
 ---
-classifiers: ["kfp", "dfnet", "p1fp"]# ", "varcnn-sizes", "varcnn-time"]
+classifiers: ["dfnet", "p1fp"]# ", "varcnn-sizes", "varcnn-time"]
 
 # open_world_dataset: "../generalisability-analysis/results/open-world-dataset.hdf"
 open_world_dataset: "../split-traffic/results/dataset-rr-50-2.hdf"

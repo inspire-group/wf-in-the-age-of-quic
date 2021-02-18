@@ -238,17 +238,17 @@ class Splitter:
             train_idx = np.concatenate((
                 monitored_indices.train, unmonitored_indices.train))
             self.random_state.shuffle(train_idx)
-            train_idx = np.delete(range(len(train_idx)/2, len(train_idx)))
+            #train_idx = np.delete(range(len(train_idx)/2, len(train_idx)))
 
             val_idx = np.concatenate((
                 monitored_indices.val, unmonitored_indices.val))
             self.random_state.shuffle(val_idx)
-            val_idx = np.delete(range(len(val_idx)/2, len(val_idx)))
+            #val_idx = np.delete(range(len(val_idx)/2, len(val_idx)))
 
             test_idx = np.concatenate((
                 monitored_indices.test, unmonitored_indices.test))
             self.random_state.shuffle(test_idx)
-            test_idx = np.delete(range(len(test_idx)/2, len(test_idx)))
+            #test_idx = np.delete(range(len(test_idx)/2, len(test_idx)))
 
             yield Split(train_idx, val_idx, test_idx)
 
