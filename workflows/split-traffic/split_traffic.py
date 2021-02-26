@@ -25,12 +25,24 @@ _LOGGER = logging.getLogger("be-split-traffic")
 # bookkeeping: keep this seed somewhere
 random.seed(1234)
 
+def choose_paths(nchoices, npaths, strategy):
+    if strategy == "rr":
+        paths = list(range(npaths)) * int(nchoices/npaths)
+        return paths + list(range(nchoices % npaths))
+    # TODO: be able to manually tune weighted random
+    if strategy == "wr":
+        return random.choices(range(npaths), k=nchoices)
+    if strategy == "136r":
+        return random.choices(range(npaths), weights=[0.1, 0.3, 0.6], k=nchoices)
+
 def choose_path(prev_path, npaths, strategy):
     if strategy == "rr":
         return (prev_path + 1) % npaths
     # TODO: be able to manually tune weighted random
     if strategy == "wr":
         return random.choice(range(npaths))
+    if strategy == "136r":
+        return random.choices(range(npaths), weights=[0.1, 0.3, 0.6])[0]
 
 def split(label, sizes, timestamps, strategy, freq, npaths):
     if len(sizes) <= npaths * freq:
@@ -42,11 +54,13 @@ def split(label, sizes, timestamps, strategy, freq, npaths):
         new_sizes.append([])
         new_timestamps.append([])
 
-    path = 0
+    paths = choose_paths(int(len(sizes)/freq)+1, npaths, strategy)
+    path_i = 0
     for i in range(0, len(sizes), freq):
+        path = paths[path_i]
         new_sizes[path] += list(sizes[i:i+freq])
         new_timestamps[path] += list(timestamps[i:i+freq])
-        path = (path + 1) % npaths
+        path_i += 1
 
     # Normalize all new timestamp paths to 0, remove empty paths
     new_timestamps = [

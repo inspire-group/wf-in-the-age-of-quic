@@ -21,7 +21,7 @@ rule create_splits:
         freq="{freq}",
         npaths="{npaths}",
     wildcard_constraints:
-        strategy="rr|wr",
+        strategy="rr|wr|136r",
         freq="\d+",
         npaths="\d+",
     shell: """\
