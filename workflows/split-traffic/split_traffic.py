@@ -2,6 +2,12 @@
 """Usage: split_traffic [options] INFILE HDF_FILE
 
 Options:
+    --standardize-sizes
+        Standardizes size information.
+
+    --use-ms
+        Use "ms" unit when interpreting freq, rather than "packet" unit.
+
     --freq f
         Split the data into k folds [default: 50]
 
@@ -25,26 +31,41 @@ _LOGGER = logging.getLogger("be-split-traffic")
 # bookkeeping: keep this seed somewhere
 random.seed(1234)
 
-def choose_paths(nchoices, npaths, strategy):
+
+# nchoicse: number of "decision points" needed to choose paths
+# npaths: # of potential paths to choose
+# strategy: how to choose paths at each decision point
+# current_p: for dwr strategy only, is the probability distribution to sample from
+def choose_paths(nchoices, npaths, strategy, current_p=[]):
+    if strategy == "none":
+        return [0] * nchoices
     if strategy == "rr":
         paths = list(range(npaths)) * int(nchoices/npaths)
         return paths + list(range(nchoices % npaths))
-    # TODO: be able to manually tune weighted random
-    if strategy == "wr":
+    if strategy == "wr": # uniform random
         return random.choices(range(npaths), k=nchoices)
-    if strategy == "136r":
-        return random.choices(range(npaths), weights=[0.1, 0.3, 0.6], k=nchoices)
+    if strategy == "136r": # fixed random
+        if npaths == 3:
+            return random.choices(range(npaths), weights=[0.1, 0.3, 0.6], k=nchoices)
+        if npaths == 2:
+            return random.choices(range(npaths), weights=[0.3, 0.7], k=nchoices)
+    if strategy == "dwr":
+        return random.choices(range(npaths), weights=current_p, k=nchoices)
 
-def choose_path(prev_path, npaths, strategy):
-    if strategy == "rr":
-        return (prev_path + 1) % npaths
-    # TODO: be able to manually tune weighted random
-    if strategy == "wr":
-        return random.choice(range(npaths))
-    if strategy == "136r":
-        return random.choices(range(npaths), weights=[0.1, 0.3, 0.6])[0]
+def split_timestamp(timestamps, freq, use_ms):
+    if not use_ms:
+        return range(0, len(timestamps), freq)
+    last_split = 0
+    freq_s = freq / 1000.0
+    split_indices = [0]
+    for i, time in enumerate(timestamps):
+        if time - last_split > freq_s:
+            split_indices.append(i)
+            while time - last_split > freq_s:
+                last_split += freq_s
+    return split_indices
 
-def split(label, sizes, timestamps, strategy, freq, npaths):
+def split(label, sizes, timestamps, strategy, freq, npaths, standard_size=False, use_ms=False):
     if len(sizes) <= npaths * freq:
         return [label], [sizes], [timestamps]
     new_labels = []
@@ -53,21 +74,30 @@ def split(label, sizes, timestamps, strategy, freq, npaths):
     for n in range(npaths):
         new_sizes.append([])
         new_timestamps.append([])
+    new_p = []
+    if strategy == "dwr":
+        new_p = np.random.dirichlet(np.ones(npaths), size=1)[0]
 
-    paths = choose_paths(int(len(sizes)/freq)+1, npaths, strategy)
-    path_i = 0
-    for i in range(0, len(sizes), freq):
-        path = paths[path_i]
-        new_sizes[path] += list(sizes[i:i+freq])
-        new_timestamps[path] += list(timestamps[i:i+freq])
-        path_i += 1
+    split_indices = split_timestamp(timestamps, freq, use_ms)
+    paths = choose_paths(len(split_indices), npaths, strategy, new_p)
+    for i, split_index in enumerate(split_indices):
+        if i == len(split_indices) - 1:
+            next_split = len(sizes)
+        else:
+            next_split = split_indices[i+1]
+        path = paths[i]
+        new_sizes[path] += list(sizes[split_index:next_split])
+        new_timestamps[path] += list(timestamps[split_index:next_split])
 
-    # Normalize all new timestamp paths to 0, remove empty paths
+    # Normalize all new timestamp paths to 0, remove empty or paths that are too small
     new_timestamps = [
             [time - timestamp[0] for time in timestamp] for timestamp in new_timestamps
-            if len(timestamp) > 0
+            if len(timestamp) > 10
         ]
-    new_sizes = [sizes for sizes in new_sizes if len(sizes) > 0]
+    if standard_size:
+        new_sizes = [np.sign(sizes) for sizes in new_sizes if len(sizes) > 10]
+    else:
+        new_sizes = [sizes for sizes in new_sizes if len(sizes) > 10]
 
     for n in range(len(new_sizes)):
         new_labels.append(label)
@@ -112,8 +142,15 @@ def main(infile: str, hdf_file: str, **splitter_kw):
         level=logging.INFO)
 
     strategy = splitter_kw.pop("strategy")
-    freq = splitter_kw.pop("freq")
-    npaths = splitter_kw.pop("n_paths")
+    if strategy == "none":
+        freq = 1
+        npaths = 1
+    else:
+        freq = splitter_kw.pop("freq")
+        npaths = splitter_kw.pop("n_paths")
+    standard_sizes = splitter_kw.pop("standardize_sizes")
+    use_ms = splitter_kw.pop("use_ms")
+
 
     with h5py.File(infile, mode="r") as h5in:
         _LOGGER.info("Reading labels from %r...", infile)
@@ -127,7 +164,7 @@ def main(infile: str, hdf_file: str, **splitter_kw):
         for i in range(len(labels)):
             if labels[i][2] != b"quic":
                 continue
-            l, s, t = split(labels[i], h5in["sizes"][i], h5in["timestamps"][i], strategy, freq, npaths)
+            l, s, t = split(labels[i], h5in["sizes"][i], h5in["timestamps"][i], strategy, freq, npaths, standard_sizes, use_ms)
             ls += l
             sizes += s
             timestamps += t
@@ -140,6 +177,8 @@ if __name__ == "__main__":
     main(**doceasy.doceasy(__doc__, {
         "INFILE": str,
         "HDF_FILE": str,
+        "--standardize-sizes": bool,
+        "--use-ms": bool,
         "--freq": doceasy.Use(int),
         "--strategy": str,
         "--n-paths": doceasy.Use(int)

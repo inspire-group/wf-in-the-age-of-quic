@@ -5,7 +5,7 @@ localrules: default
 rule default:
     """Run all rules necessary to create all the desired defended datasets."""
     input:
-        expand("results/dataset-{strategy}-{freq}-{npaths}.hdf",strategy=config["strategies"], freq=config["freqs"], npaths=config["n_paths"])
+        expand("results/dataset-{strategy}-{freq}-{npaths}-ms.hdf",strategy=config["strategies"], freq=config["freqs"], npaths=config["n_paths"])
 
 
 rule create_splits:
@@ -13,7 +13,7 @@ rule create_splits:
     input:
         config["open_world_dataset"]
     output:
-        "results/dataset-{strategy}-{freq}-{npaths}.hdf"
+        "results/dataset-{strategy}-{freq}-{npaths}-ms.hdf"
     log:
         "results/dataset-{strategy}-{freq}-{npaths}.log"
     params:
@@ -21,9 +21,9 @@ rule create_splits:
         freq="{freq}",
         npaths="{npaths}",
     wildcard_constraints:
-        strategy="rr|wr|136r",
+        strategy="rr|wr|dwr|136r|none",
         freq="\d+",
         npaths="\d+",
     shell: """\
-        ./split_traffic.py --freq {params.freq} --strategy {params.strategy} --n-paths {params.npaths} {input} {output} 2> {log}
+        ./split_traffic.py --freq {params.freq} --use-ms --strategy {params.strategy} --n-paths {params.npaths} {input} {output} 2> {log}
         """
