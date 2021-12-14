@@ -9,13 +9,13 @@ Options:
         Use "ms" unit when interpreting freq, rather than "packet" unit.
 
     --freq f
-        Split the data into k folds [default: 50]
+        How often to perform the switching, either in packet or ms unit. [default: 50]
 
     --strategy s
-        Repeat the k-folds n times [default: rr]
+        Which path-switching strategy to emulate. [default: rr]
 
     --n-paths n
-        Set aside frac fraction of the training set for validation [default: 2].
+        Number of paths to switch along [default: 2].
 
 """
 
