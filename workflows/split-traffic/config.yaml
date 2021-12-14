@@ -1,0 +1,12 @@
+---
+
+open_world_dataset: "../generalisability-analysis/results/open-world-dataset.hdf"
+
+# Splitting strategies
+strategies: ["dwr", "rr", "wr"]
+
+# Splitting frequency
+freqs: [100, 200] #, 500ms
+
+# Number of paths to split down
+n_paths: [3] # , 5

@@ -33,14 +33,14 @@ rule compute_tree_importances__all:
     """Run compute_tree_importances for tcp, quic, and mixed datasets."""
     input:
         expand("results/tree-importance/importances-{protocol}.csv",
-               protocol=("tcp", "quic", "mixed"))
+               protocol=config["protocols"])
 
 
 rule feature_comparison_plot:
     """Plot the feature rank comparisons."""
     input:
         expand("results/tree-importance/importances-{protocol}.csv",
-               protocol=("tcp", "quic", "mixed"))
+               protocol=config["protocols"])
     output:
         "results/plots/feature-rank-comparison.pgf",
         "results/tree-importance/quic-feature-ranks.csv"

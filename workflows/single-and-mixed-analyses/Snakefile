@@ -9,7 +9,7 @@ rule default:
         "results/plots/quic-feature-scores.pgf",
         expand("results/dataset-performance/{classifier}/predictions-{protocol}-{i:02d}.csv",
                classifier=config["classifiers"], i=range(config["n_repetitions"]),
-               protocol=("tcp", "quic", "mixed"))
+               protocol=config["protocols"])
 
 
 rule create_splits:
@@ -24,11 +24,11 @@ rule create_splits:
         protocol="{protocol}",
         seed="{seed}"
     wildcard_constraints:
-        protocol="tcp|quic|mixed",
+        protocol="quic",
         seed="\d+"
     shell: """\
         scripts/split-samples --protocol {params.protocol} --seed {params.seed} \
-            --n-repeats 3 {input} {output} 2> {log}
+            --n-repeats 1 {input} {output} 2> {log}
         """
 
 
