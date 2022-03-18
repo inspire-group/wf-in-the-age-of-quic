@@ -1,3 +1,13 @@
+
+## [Added] Relevant directories for CoMPS evaluation
+
+ - [Identify QUIC Sites]: ./workflows/identify-quic-sites
+   - Used to identify QUIC-supporting sites in top million lists. From these, we choose the top 10K websites that support a version of QUIC that supports connection migration.
+ - [Single and Mixed Analyses]: ./workflows/single-and-mixed-analyses
+   - All the evaluation for CoMPS is using the evaluation workflows in this directory.
+ - [Split Traffic]: ./workflows/split-traffic
+   - This is a new workflow we introduced for the purposes of simulating traffic split using various CoMPS instantiations.
+
 # Website Fingerprinting in the Age of QUIC
 
 This repository contains the code for the paper "Website Fingerprinting in the Age of QUIC" (PETS 2021).
